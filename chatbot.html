@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <link rel="stylesheet" href="chatstyle.css">
+</head>
+<body>
+    <div id="chatbot-icon">
+        💬
+    </div>
+    <div id="chatbot-containeer" class="hidden">
+<div id="chatbot-header">
+    <span>Chatbot</span>
+    <button id="close-btn">&times;</button>
+</div>
+<div id="chatbot-body">
+    <div id="chatbot-message">
+         
+    </div>
+</div>
+<div id="chatbot-input-containeer">
+    <input type="text" id="chatboot-input" placeholder="Type a message" >
+<button id="send-btn">Send</button>
+</div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+  const chatbotContainer = document.getElementById("chatbot-containeer");
+  const closeBtn = document.getElementById("close-btn");
+  const sendBtn = document.getElementById("send-btn");
+  const chatbotInput = document.getElementById("chatboot-input");
+  const chatbotMessages = document.getElementById("chatbot-message");
+  const chatbotIcon = document.getElementById("chatbot-icon");
+
+  chatbotIcon.addEventListener("click", function () {
+    chatbotContainer.classList.remove("hidden");
+  });
+
+  closeBtn.addEventListener("click", function () {
+    chatbotContainer.classList.add("hidden");
+  });
+
+  sendBtn.addEventListener("click", sendMessage);
+  chatbotInput.addEventListener("keypress", function (e) {
+    if (e.key === "Enter") {
+      sendMessage();
+    }
+  });
+//mssg send garya ho yo
+  function sendMessage() {
+    const userMessage = chatbotInput.value.trim();
+    if (userMessage) {
+      appendMessage("user", userMessage);
+      chatbotInput.value = "";
+      getBotResponse(userMessage);
+    }
+  }
+
+  function appendMessage(sender, message) {
+    const messageElement = document.createElement("div");
+    messageElement.classList.add("message", sender);
+    messageElement.textContent = message;
+    chatbotMessages.appendChild(messageElement);
+    chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+  }
+//api token leko
+  async function getBotResponse(userMessage) {
+  const apiKey = "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"; 
+  const apiUrl = "https://api-inference.huggingface.co/models/google/gemma-2b-it";
+
+  appendMessage("bot", "🤖 AI is typing...");
+//exception handling vayo yo
+  try {
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        inputs: userMessage
+      })
+    });
+
+    const data = await response.json();
+
+    let botMessage = "⚠️ No response from AI model.";
+    
+    if (Array.isArray(data) && data[0]?.generated_text) {
+      botMessage = data[0].generated_text;
+    } else if (typeof data?.error === "string") {
+      botMessage = "❌ " + data.error;
+    }
+
+    const botElements = chatbotMessages.getElementsByClassName("bot");
+    if (botElements.length) {
+      botElements[botElements.length - 1].textContent = botMessage;
+    } else {
+      appendMessage("bot", botMessage);
+    }
+
+  } catch (error) {
+    console.error("Error fetching bot response:", error);
+    appendMessage("bot", "❌ Error contacting AI model. Please try again.");
+  }
+}
+
+});
+
+    </script>
+</body>
+</html>
